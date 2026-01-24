@@ -13,13 +13,6 @@
     "active": true,
     "copyright": "Copyright © 2025 btjawa",
     "createUpdaterArtifacts": true,
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
     "license": "GPL-3.0-or-later",
     "publisher": "btjawa",
     "shortDescription": "A cross-platform bilibili toolbox"

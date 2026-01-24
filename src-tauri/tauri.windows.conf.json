@@ -3,6 +3,9 @@
   "identifier": "com.btjawa.bilitools",
   "bundle": {
     "targets": "nsis",
+    "icon": [
+      "icons/windows/icon.ico"
+    ],
     "windows": {
       "certificateThumbprint": null,
       "nsis": {

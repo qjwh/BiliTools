@@ -6,6 +6,9 @@
   },
   "bundle": {
     "targets": ["app", "dmg"],
+    "icon": [
+      "icons/macos/icon.icns"
+    ],
     "macOS": {
       "entitlements": "./packages/macos/entitlements.plist",
       "dmg": {
