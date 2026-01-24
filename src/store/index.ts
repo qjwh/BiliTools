@@ -1,9 +1,6 @@
 import { createPinia } from 'pinia';
 
-export { useAppStore } from './app';
-export { useQueueStore } from './queue';
-export { useSettingsStore } from './settings';
-export { useUserStore } from './user';
-export { useComponentsStore } from './components';
+export { useSystemStore } from './system';
+export { useAuthStore } from './auth';
 
 export default createPinia();

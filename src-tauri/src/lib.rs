@@ -1,122 +1,105 @@
-pub mod commands;
-pub mod errors;
-pub mod services;
-pub mod shared;
-pub mod storage;
+mod auth;
+mod config;
+mod error;
+mod event;
+mod http;
+mod init;
+mod logger;
+mod services;
+mod shared;
+mod window;
 
-use commands::*;
-use tauri::Manager;
-use tauri_specta::{collect_commands, collect_events, Builder};
+use directories::ProjectDirs;
+use specta_typescript::Typescript;
+use tauri::{Manager, async_runtime};
+use tauri_specta::{Builder, collect_commands, collect_events};
 
-#[cfg(debug_assertions)]
-use tauri_plugin_log::fern::colors::{Color, ColoredLevelConfig};
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    std::panic::set_hook(Box::new(|e| {
-        let bt = std::backtrace::Backtrace::force_capture();
-        log::error!("Panicked: {e}\n{bt:?}");
-    }));
+pub fn run() {
+    logger::init();
+    tracing::info!("BiliTools v{VERSION}");
+
     let builder = Builder::<tauri::Wry>::new()
-        // Then register them (separated by a comma)
         .commands(collect_commands![
-            // Essentials
-            meta,
-            init,
-            set_window,
-            config_write,
-            open_cache,
-            get_size,
-            clean_cache,
-            db_import,
-            db_export,
-            export_data,
-            // Login
-            stop_login,
-            exit,
-            sms_login,
-            pwd_login,
-            switch_cookie,
-            scan_login,
-            refresh_cookie,
-            // Queue
-            ctrl_event,
-            open_folder,
-            submit_task,
-            plan_scheduler,
-            process_scheduler,
-            // update_max_conc,
+            config::resolve_config,
+            init::init,
+            auth::ensure_request_env,
+            auth::scan_login_prepare,
+            auth::scan_login,
+            auth::sms_login_prepare,
+            auth::sms_login_send_code,
+            auth::sms_login,
+            auth::exit_login,
+            http::bili_request,
         ])
-        .events(collect_events![
-            shared::HeadersData,
-            shared::ProcessError,
-            queue::frontend::QueueEvent
-        ]);
+        .events(collect_events![event::rpc::FrontendRequest,]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     builder
         .export(
-            specta_typescript::Typescript::default()
-                .bigint(specta_typescript::BigIntExportBehavior::Number)
-                .header("// @ts-nocheck"),
-            "../src/services/backend.ts",
+            Typescript::default().header("// @ts-nocheck"),
+            "../generated/backend.ts",
         )
         .expect("Failed to export typescript bindings");
 
-    let log_builder = tauri_plugin_log::Builder::new()
-        .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
-        .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
-        .level(log::LevelFilter::Info)
-        .level_for("sqlx::query", log::LevelFilter::Warn);
-
-    #[cfg(debug_assertions)]
-    let log_builder = log_builder.with_colors(
-        ColoredLevelConfig::new()
-            .error(Color::Red)
-            .warn(Color::Yellow)
-            .info(Color::Green)
-            .debug(Color::Blue)
-            .trace(Color::Magenta),
-    );
+    let dirs = ProjectDirs::from("com", "btjawa", "bilitools")
+        .expect("Get ProjectDirs");
 
     tauri::Builder::default()
-        .plugin(log_builder.build())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_http::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            let windows = app.webview_windows();
-            windows
-                .values()
-                .next()
-                .expect("Sorry, no window found")
-                .set_focus()
-                .expect("Can't Bring Window to Focus");
-        }))
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
-            let version = &app.package_info().version;
-            log::info!("BiliTools v{}", version);
             builder.mount_events(app);
-            shared::APP_HANDLE.set(app.app_handle().clone())?;
-            #[cfg(debug_assertions)]
-            if let Some(window) = app.get_webview_window("main") {
-                window.open_devtools();
-            }
-            tauri::async_runtime::spawn(async move {
-                storage::init().await?;
-                services::init().await?;
-                Ok::<_, crate::TauriError>(())
+
+            app.manage(init::InitState::new());
+            app.manage(config::ConfigManager::new(
+                dirs.config_dir().join("config.toml"),
+            ));
+            app.manage(auth::AuthManager::new(
+                dirs.data_dir().join("auth.session"),
+            ));
+            app.manage(http::HttpContext::new());
+            app.manage(services::ServicesManager::new(
+                dirs.cache_dir()
+            ));
+
+            let init_state = app.state::<init::InitState>();
+            let config_manager = app.state::<config::ConfigManager>();
+            let auth_manager = app.state::<auth::AuthManager>();
+            let http_context = app.state::<http::HttpContext>();
+
+            init_state.result(config_manager.load().map_err(Into::into));
+            init_state.result(auth_manager.load().map_err(Into::into));
+            
+            let config = &*config_manager.snapshot();
+
+            init_state.result(http_context.rebuild(config).map_err(Into::into));
+
+            window::configure(app.handle(), config)?;
+
+            let handle_future = app.handle().clone();
+            async_runtime::spawn(async {
+                let app = handle_future;
+
+                let init_state = app.state::<init::InitState>();
+                let config_manager = app.state::<config::ConfigManager>();
+                let services_manager = app.state::<services::ServicesManager>();
+
+                init_state.result(
+                    services_manager.run(
+                        &app,
+                        &*config_manager.snapshot()
+                    ).await.map_err(Into::into)
+                );
             });
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running BiliTools");
-    Ok(())
 }

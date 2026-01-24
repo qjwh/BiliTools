@@ -4,7 +4,4 @@
   "i18n-ally.keystyle": "nested",
   "css.lint.unknownAtRules": "ignore",
   "eslint.useFlatConfig": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  }
 }

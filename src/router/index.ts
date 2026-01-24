@@ -1,47 +1,21 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import {
-  UserPage,
-  SearchPage,
-  HistoryPage,
-  DownPage,
-  SettingsPage,
-  InfoPage,
-} from '@/views';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { HomeView } from '@/views/Home';
+import { SettingsView } from '@/views/Settings';
 
-export const routes = [
-  {
-    path: '/user-page',
-    name: 'userPage',
-    component: UserPage,
-  },
+export const ROUTES: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'searchPage',
-    component: SearchPage,
+    name: 'home',
+    component: HomeView,
   },
   {
-    path: '/history-page',
-    name: 'historyPage',
-    component: HistoryPage,
-  },
-  {
-    path: '/down-page',
-    name: 'downPage',
-    component: DownPage,
-  },
-  {
-    path: '/settings-page',
-    name: 'settingsPage',
-    component: SettingsPage,
-  },
-  {
-    path: '/info-page',
-    name: 'infoPage',
-    component: InfoPage,
+    path: '/settings',
+    name: 'settings',
+    component: SettingsView,
   },
 ] as const;
 
 export default createRouter({
   history: createWebHistory(),
-  routes,
+  routes: ROUTES,
 });

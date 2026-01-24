@@ -1,49 +1,30 @@
-import js from '@eslint/js';
-import globals from 'globals';
-import vueParser from 'vue-eslint-parser';
-import tseslint from 'typescript-eslint';
-import pluginVue from 'eslint-plugin-vue';
-import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import { defineConfig } from 'eslint/config';
+
+import eslintPluginVue from 'eslint-plugin-vue';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import typescriptEslint from 'typescript-eslint';
+import vueEslintParser from 'vue-eslint-parser';
 
 export default defineConfig([
   {
-    ignores: [
-      'dist',
-      'node_modules',
-      '*.min.*',
-      'src/services/backend.ts',
-      'src/shims/*',
-    ],
+    ignores: ['dist', 'node_modules', 'generated', 'public'],
   },
-  js.configs.recommended,
-  tseslint.configs.recommended,
+  // Typescript
+  typescriptEslint.configs.recommended,
   {
-    files: ['**/*.{ts,mjs,cjs,js}'],
-    languageOptions: {
-      sourceType: 'module',
-      globals: globals.browser,
-    },
+    files: ['**/*.ts'],
     rules: {
       eqeqeq: ['error'],
     },
   },
+  // Vue SFC
+  eslintPluginVue.configs['flat/recommended'],
   {
-    files: ['scripts/*.{mjs,cjs,js}'],
+    files: ['**/*.vue'],
     languageOptions: {
-      globals: globals.node,
-    },
-  },
-  pluginVue.configs['flat/recommended'],
-  {
-    files: ['*.vue', '**/*.vue'],
-    languageOptions: {
-      parser: vueParser,
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: globals.browser,
+      parser: vueEslintParser,
       parserOptions: {
-        parser: tseslint.parser,
+        parser: typescriptEslint.parser,
       },
     },
     rules: {
