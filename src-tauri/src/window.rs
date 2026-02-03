@@ -12,7 +12,7 @@ pub fn configure(
     let mut builder = WebviewWindowBuilder::new(
         app,
         "main",
-        tauri::WebviewUrl::App("index.html".into()),
+        tauri::WebviewUrl::default(),
     )
     .min_inner_size(960.0, 680.0)
     .inner_size(960.0, 680.0)
@@ -32,7 +32,18 @@ pub fn configure(
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.title_bar_style(tauri::TitleBarStyle::Overlay)
+        builder = builder
+            .title_bar_style(tauri::TitleBarStyle::Overlay)
+            // For Tahoe, the size of traffic lights is 60*14
+            // The x offset is (36-14)/2=11, the y offset is (36-14)/2+9=20
+
+            // For the legacies (Sequoia or older), the size of traffic lights is (TODO)*16
+            // The x offset is (36-16)/2=10, the y offset is (TODO)
+            .traffic_light_position(tauri::LogicalPosition::new(
+                11,
+                20
+            ))
+            .hidden_title(true);
     }
 
     #[cfg(not(target_os = "macos"))]

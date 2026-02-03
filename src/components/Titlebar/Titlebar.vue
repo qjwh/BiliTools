@@ -72,7 +72,8 @@ appWindow.onResized(async () => {
 
 <template>
   <div class="w-full h-9 relative flex items-start justify-end *:shrink-0">
-    <div class="w-12 h-full flex items-center justify-center">
+    <div v-if="isMacos" class="w-20.5"></div>
+    <div v-else class="w-12 h-full flex items-center justify-center">
       <img class="w-4 h-4" src="/app-icon.png" />
     </div>
     <div class="h-full">
