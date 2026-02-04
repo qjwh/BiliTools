@@ -1,24 +1,14 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-
-import store, { useSystemStore } from '@/store';
-import router from '@/router';
-import { commands } from '@backend';
 import '@/style.css';
-import { init, result } from '@/utils';
 
-async function bootstrap() {
-  const config = await commands.resolveConfig();
+import { bootstrap } from '@/utils/bootstrap';
+import i18n from '@/i18n';
+import store from '@/store';
+import router from '@/router';
 
-  const app = createApp(App).use(store).use(router);
+const app = createApp(App).use(i18n).use(store).use(router);
 
-  const system = useSystemStore();
-  system.apply(config.locale, config.theme, config.window_effect);
-
-  app.mount('#app');
-
-  await init.init();
-}
-
-result.setHook();
-bootstrap();
+bootstrap({
+  mount: () => app.mount('#app')
+})

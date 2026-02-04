@@ -32,8 +32,11 @@ export function biliTicketHexSign(message: string, key: string) {
 }
 
 export async function wbi(query: http.JsonValue) {
-  const nav = await getNav();
-  const { img_url, sub_url } = nav.data.wbi_img;
+  const navResp = await getNav();
+  if (!navResp) return query;
+  const nav = navResp.data;
+
+  const { img_url, sub_url } = nav.wbi_img;
 
   const imgKey = img_url
     .substring(img_url.lastIndexOf('/') + 1, img_url.length)

@@ -17,4 +17,11 @@ export const darkThemeOverrides: GlobalThemeOverrides = {
   common: {
     ...common,
   },
+  Alert: {
+    color: 'rgb(40, 40, 44)',
+    colorInfo: 'rgb(26, 46, 64)',
+    colorSuccess: 'rgb(22, 49, 46)',
+    colorWarning: 'rgb(72, 46 ,15)',
+    colorError: 'rgb(64, 26, 36)',
+  }
 };

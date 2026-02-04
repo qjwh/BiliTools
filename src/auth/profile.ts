@@ -6,10 +6,13 @@ import { auth as api } from '@/api';
 export async function getProfile() {
   const auth = useAuthStore();
 
-  const nav = (await api.getNav()).data;
-  const navStat = (await api.getNavStat()).data;
+  const navResp = await api.getNav();
+  const navStatResp = await api.getNavStat();
 
-  if (!nav.isLogin) {
+  const nav = navResp?.data;
+  const navStat = navStatResp?.data;
+
+  if (!nav?.isLogin || !navStat) {
     // use `as` to avoid the prefer-spread lint
     auth.apply(null as null, 'anonymous');
     return;

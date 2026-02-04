@@ -1,9 +1,9 @@
 mod auth;
 mod config;
 mod error;
-mod event;
 mod http;
 mod init;
+mod ipc;
 mod logger;
 mod services;
 mod shared;
@@ -27,15 +27,12 @@ pub fn run() {
             config::resolve_config,
             init::init,
             auth::ensure_request_env,
-            auth::scan_login_prepare,
+            auth::scan_login_gen_qrcode,
             auth::scan_login,
-            auth::sms_login_prepare,
-            auth::sms_login_send_code,
-            auth::sms_login,
             auth::exit_login,
             http::bili_request,
         ])
-        .events(collect_events![event::rpc::FrontendRequest,]);
+        .events(collect_events![ipc::FrontendRequest,]);
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     builder

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 import { Titlebar } from '@/components/Titlebar';
-import { Sidebar } from '@/components/Sidebar';
+import { Main } from './components/Main';
 import { useSystemStore } from '@/store';
 
 import { computed } from 'vue';
@@ -10,10 +10,9 @@ import {
   enUS,
   lightTheme,
   NConfigProvider,
-  NNotificationProvider,
+  NMessageProvider,
   zhCN,
 } from 'naive-ui';
-import { RouterView } from 'vue-router';
 import { darkThemeOverrides, lightThemeOverrides } from '@/theme';
 
 const system = useSystemStore();
@@ -40,15 +39,13 @@ const theme = computed(() => (system.isDark ? darkTheme : lightTheme));
     class="h-full flex flex-col"
   >
     <Titlebar />
-    <NNotificationProvider>
-      <main class="relative flex flex-row flex-1">
-        <Sidebar />
-        <RouterView v-slot="{ Component }">
-          <div class="flex flex-col flex-1">
-            <component :is="Component" />
-          </div>
-        </RouterView>
-      </main>
-    </NNotificationProvider>
+    <NMessageProvider
+      :max="6"
+      :duration="0"
+      container-class="top-9!"
+      placement="top-right"
+    >
+      <Main />
+    </NMessageProvider>
   </NConfigProvider>
 </template>

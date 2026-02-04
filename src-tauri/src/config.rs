@@ -26,9 +26,15 @@ pub enum Error {
 
 impl From<Error> for AppError {
     fn from(value: Error) -> Self {
+        let (source, reason) = match value {
+            Error::Io(_) => ("config", "io_failed"),
+
+            Error::TomlDe(_) |
+            Error::TomlSer(_) => ("config", "parse_faild"),
+        };
         Self {
-            source: "config".into(),
-            reason: value.to_string(),
+            source,
+            reason
         }
     }
 }

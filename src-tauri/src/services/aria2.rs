@@ -4,11 +4,24 @@ use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tokio::sync::RwLock;
 
 use crate::config::Config;
+use crate::error::AppError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("tauri sidecar error: {0}")]
-    Sidecar(#[from] tauri_plugin_shell::Error),
+    Shell(#[from] tauri_plugin_shell::Error),
+}
+
+impl From<Error> for AppError {
+    fn from(value: Error) -> Self {
+        let (source, reason) = match value {
+            Error::Shell(_) => ("aria2", "spawn_failed"),
+        };
+        Self {
+            source,
+            reason
+        }
+    }
 }
 
 pub struct Aria2Service {

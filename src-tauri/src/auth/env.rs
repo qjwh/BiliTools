@@ -1,14 +1,45 @@
-use crate::{event::rpc, shared::unix_now};
+use crate::{error::AppError, shared::unix_now};
 use serde::Deserialize;
 use tauri::{AppHandle, State};
 
-use super::{AuthManager, Error};
+use super::AuthManager;
 use crate::http::{HttpContext, Method};
+
+#[derive(Debug, thiserror::Error)]
+pub enum EnvError {
+    #[error("env http error")]
+    Http(#[from] crate::http::Error),
+
+    #[error("auth env ipc error")]
+    Ipc(#[from] crate::ipc::Error),
+
+    #[error("env get buvid4 failed: {0} ({1})")]
+    GetBuvid4Failed(String, i32),
+
+    #[error("env gen web ticket failed: {0} ({1})")]
+    GenWebTicketFailed(String, i32),
+}
+
+impl From<EnvError> for AppError {
+    fn from(value: EnvError) -> Self {
+        let (source, reason) = match value {
+            EnvError::Http(r) => return r.into(),
+            EnvError::Ipc(r) => return r.into(),
+
+            EnvError::GenWebTicketFailed(_, _) |
+            EnvError::GetBuvid4Failed(_, _) => ("auth.env", "ensure_failed"),
+        };
+        Self {
+            source,
+            reason
+        }
+    }
+}
 
 pub async fn ensure_base(
     auth: &State<'_, AuthManager>,
     http: &State<'_, HttpContext>,
-) -> Result<(), Error> {
+) -> Result<(), EnvError> {
     if auth.with_session(|s| s.cookies.contains("buvid3")) {
         return Ok(());
     }
@@ -42,7 +73,7 @@ struct BuvidResponseData {
 pub async fn ensure_buvid(
     auth: &State<'_, AuthManager>,
     http: &State<'_, HttpContext>,
-) -> Result<(), Error> {
+) -> Result<(), EnvError> {
     if auth.with_session(|s| {
         s.cookies.contains("buvid3") && s.cookies.contains("buvid4")
     }) {
@@ -59,7 +90,7 @@ pub async fn ensure_buvid(
         )
         .await?;
 
-    let resp_json: BuvidResponse = serde_json::from_slice(&resp.bytes)?;
+    let resp_json: BuvidResponse = resp.json()?;
 
     if let Some(data) = resp_json.data {
         auth.with_session(|s| {
@@ -71,7 +102,7 @@ pub async fn ensure_buvid(
             }
         })
     } else {
-        return Err(Error::GetBuvid4Failed(resp_json.message, resp_json.code));
+        return Err(EnvError::GetBuvid4Failed(resp_json.message, resp_json.code));
     }
     Ok(())
 }
@@ -79,14 +110,14 @@ pub async fn ensure_buvid(
 pub async fn ensure_uuid(
     app: &AppHandle,
     auth: &State<'_, AuthManager>,
-) -> Result<(), Error> {
+) -> Result<(), EnvError> {
     if auth.with_session(|s| s.cookies.contains("_uuid")) {
         return Ok(());
     }
 
-    let uuid: String = rpc::request(
+    let uuid: String = crate::ipc::request(
         app,
-        rpc::FrontendRequestPayload::BiliUuid {
+        crate::ipc::FrontendRequestPayload::BiliUuid {
             now: (unix_now().as_millis() % 100_000).to_string(),
         },
     )
@@ -115,7 +146,7 @@ pub async fn ensure_bili_ticket(
     app: &AppHandle,
     auth: &State<'_, AuthManager>,
     http: &State<'_, HttpContext>,
-) -> Result<(), Error> {
+) -> Result<(), EnvError> {
     if auth.with_session(|s| s.cookies.contains("bili_ticket")) {
         return Ok(());
     }
@@ -125,9 +156,9 @@ pub async fn ensure_bili_ticket(
     let e = unix_now().as_secs();
     let t = "YhxToH[2q";
 
-    let hexsign: String = rpc::request(
+    let hexsign: String = crate::ipc::request(
         app,
-        rpc::FrontendRequestPayload::BiliTicketHexSign {
+        crate::ipc::FrontendRequestPayload::BiliTicketHexSign {
             message: format!("ts{e}"),
             key: t.into(),
         },
@@ -147,12 +178,12 @@ pub async fn ensure_bili_ticket(
         None,
     ).await?;
 
-    let resp_json: BiliTicketResponse = serde_json::from_slice(&resp.bytes)?;
+    let resp_json: BiliTicketResponse = resp.json()?;
 
     if let Some(data) = resp_json.data {
         auth.with_session(|s| s.cookies.set("bili_ticket", &data.ticket));
     } else {
-        return Err(Error::GenWebTicketFailed(
+        return Err(EnvError::GenWebTicketFailed(
             resp_json.message,
             resp_json.code,
         ));

@@ -2,6 +2,7 @@ import { Effect, getCurrentWindow } from '@tauri-apps/api/window';
 import { defineStore } from 'pinia';
 
 import { Locale, Theme, WindowEffect } from '@backend';
+import i18n from '@/i18n';
 
 export const useSystemStore = defineStore('system', {
   state: (): {
@@ -27,6 +28,7 @@ export const useSystemStore = defineStore('system', {
       if (this.locale === next) return;
       this.locale = next;
       document.documentElement.lang = next;
+      i18n.global.locale.value = next;
     },
     async applyTheme(next: Theme) {
       if (this.theme === next) return;

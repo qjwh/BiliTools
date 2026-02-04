@@ -12,9 +12,12 @@ pub enum Error {
 
 impl From<Error> for AppError {
     fn from(value: Error) -> Self {
+        let (source, reason) = match value {
+            Error::Aria2(r) => return r.into(),
+        };
         Self {
-            source: "services".into(),
-            reason: value.to_string(),
+            source,
+            reason
         }
     }
 }

@@ -4,7 +4,41 @@ use tauri_specta::Event;
 use tokio::{sync::oneshot, time};
 use uuid::Uuid;
 
-use super::Error;
+use crate::error::AppError;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("frontend timeout")]
+    FrontendTimeout,
+
+    #[error("no response from frontend")]
+    FrontendNoResponse,
+
+    #[error("oneshot recv error")]
+    RecvError(#[from] tokio::sync::oneshot::error::RecvError),
+
+    #[error("JSON error: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("Tauri error: {0}")]
+    Tauri(#[from] tauri::Error),
+}
+
+impl From<Error> for AppError {
+    fn from(value: Error) -> Self {
+        let (source, reason) = match value {
+            Error::FrontendTimeout => ("ipc", "frontend_timeout"),
+            Error::FrontendNoResponse |
+            Error::RecvError(_) |
+            Error::Json(_) |
+            Error::Tauri(_) => ("ipc", "frontend_error"),
+        };
+        Self {
+            source,
+            reason
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, specta::Type, Event)]
 pub struct FrontendRequest {

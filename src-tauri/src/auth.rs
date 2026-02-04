@@ -7,7 +7,6 @@ mod env;
 mod exit;
 mod model;
 mod scan;
-mod sms;
 
 pub use model::Cookie;
 
@@ -18,36 +17,6 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("sms login failed: {0} ({1})")]
-    SmsLoginFailed(String, i32),
-
-    #[error("sms login send code failed: {0} ({1})")]
-    SmsLoginSendCodeFailed(String, i32),
-
-    #[error("prepare sms login failed: {0} ({1})")]
-    PrepareSmsLoginFailed(String, i32),
-
-    #[error("scan login failed: {0} ({1})")]
-    ScanLoginFailed(String, i32),
-
-    #[error("prepare scan login failed: {0} ({1})")]
-    PrepareScanLoginFailed(String, i32),
-
-    #[error("exit login failed: {0} ({1})")]
-    ExitLoginFailed(String, i32),
-
-    #[error("get buvid4 failed: {0} ({1})")]
-    GetBuvid4Failed(String, i32),
-
-    #[error("gen web ticket failed: {0} ({1})")]
-    GenWebTicketFailed(String, i32),
-
-    #[error("event error: {0}")]
-    Event(#[from] crate::event::Error),
-
-    #[error("HTTP client error: {0}")]
-    Http(#[from] crate::http::Error),
-
     #[error("Io error: {0}")]
     Io(#[from] io::Error),
 
@@ -60,9 +29,15 @@ pub enum Error {
 
 impl From<Error> for AppError {
     fn from(value: Error) -> Self {
+        let (source, reason) = match value {
+            Error::Io(_) => ("auth", "io_failed"),
+
+            Error::Base64Decode(_) | 
+            Error::Json(_) => ("auth", "parse_failed")
+        };
         Self {
-            source: "auth".into(),
-            reason: value.to_string(),
+            source,
+            reason,
         }
     }
 }
@@ -140,12 +115,12 @@ pub async fn ensure_request_env(app: AppHandle) -> AppResult<()> {
 
 #[tauri::command]
 #[specta::specta]
-pub async fn scan_login_prepare(
+pub async fn scan_login_gen_qrcode(
     app: AppHandle,
 ) -> AppResult<scan::ScanLoginPrepareResponseData> {
     let auth = app.state::<AuthManager>();
     let http = app.state::<HttpContext>();
-    let data = scan::scan_login_prepare(&auth, &http).await?;
+    let data = scan::scan_login_gen_qrcode(&auth, &http).await?;
     Ok(data)
 }
 
@@ -158,52 +133,6 @@ pub async fn scan_login(
     let auth = app.state::<AuthManager>();
     let http = app.state::<HttpContext>();
     let data = scan::scan_login(&auth, &http, &qrcode_key).await?;
-    Ok(data)
-}
-
-#[tauri::command]
-#[specta::specta]
-pub async fn sms_login_prepare(
-    app: AppHandle,
-) -> AppResult<sms::SmsCaptchaResponseData> {
-    let auth = app.state::<AuthManager>();
-    let http = app.state::<HttpContext>();
-    let data = sms::sms_login_prepare(&auth, &http).await?;
-    Ok(data)
-}
-
-#[tauri::command]
-#[specta::specta]
-pub async fn sms_login_send_code(
-    app: AppHandle,
-    cid: &str,
-    tel: &str,
-    token: &str,
-    gt: &str,
-    challenge: &str,
-) -> AppResult<sms::SmsSendCodeResponseData> {
-    let auth = app.state::<AuthManager>();
-    let http = app.state::<HttpContext>();
-    let data = sms::sms_login_send_code(
-        &auth, &http, cid, tel, token, gt, challenge
-    ).await?;
-    Ok(data)
-}
-
-#[tauri::command]
-#[specta::specta]
-pub async fn sms_login(
-    app: AppHandle,
-    cid: &str,
-    tel: &str,
-    code: &str,
-    captcha_key: &str,
-) -> AppResult<()> {
-    let auth = app.state::<AuthManager>();
-    let http = app.state::<HttpContext>();
-    let data = sms::sms_login(
-        &auth, &http, cid, tel, code, captcha_key
-    ).await?;
     Ok(data)
 }
 

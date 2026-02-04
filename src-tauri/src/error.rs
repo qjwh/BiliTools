@@ -4,6 +4,6 @@ pub type AppResult<T> = Result<T, AppError>;
 
 #[derive(Debug, Clone, Serialize, specta::Type)]
 pub struct AppError {
-    pub source: String,
-    pub reason: String,
+    pub source: &'static str,
+    pub reason: &'static str,
 }

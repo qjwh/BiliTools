@@ -9,6 +9,9 @@
     "beforeBuildCommand": "pnpm web:build",
     "frontendDist": "../dist"
   },
+  "app": {
+    "macOSPrivateApi": true
+  },
   "bundle": {
     "active": true,
     "copyright": "Copyright © 2025 btjawa",

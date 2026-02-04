@@ -1,7 +1,7 @@
 use std::sync::{LazyLock, RwLock};
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_http::reqwest;
 
@@ -45,9 +45,20 @@ pub enum Error {
 
 impl From<Error> for AppError {
     fn from(value: Error) -> Self {
+        let (source, reason) = match value {
+            Error::InvalidCookie => ("http", "invalid_cookie"),
+            Error::NotInitialized => ("http", "not_initialized"),
+
+            Error::FromUtf8Error(_) |
+            Error::ToStrError(_) |
+            Error::Json(_) => ("http", "parse_resp_failed"),
+
+            Error::Reqwest(e) if e.is_timeout() => ("http", "timeout"),
+            Error::Reqwest(_) => ("http", "failed"),
+        };
         Self {
-            source: "http".into(),
-            reason: value.to_string(),
+            source,
+            reason
         }
     }
 }
@@ -78,6 +89,24 @@ pub enum Body<'a> {
 pub struct Response {
     pub cookies: Vec<Cookie>,
     pub bytes: bytes::Bytes,
+}
+
+impl Response {
+    pub fn json<T>(&self) -> Result<T, Error>
+    where 
+        T: DeserializeOwned
+    {
+        Ok(serde_json::from_slice(&self.bytes)?)
+    }
+
+    pub fn text(&self) -> Result<String, Error> {
+        // use str::from_utf8 instead of String::from_utf8 to avoid allocating when bytes are not valid UTF-8.
+        Ok(
+            str::from_utf8(&self.bytes)
+                .map_err(|e| Error::FromUtf8Error(e))?
+                .to_string()
+        )
+    }
 }
 
 impl HttpContext {
@@ -267,13 +296,8 @@ pub async fn bili_request(
         )
         .await?;
 
-    // use str::from_utf8 instead of String::from_utf8 to avoid allocating when bytes are not valid UTF-8.
-    let inner = str::from_utf8(&resp.bytes)
-        .map_err(|e| Error::FromUtf8Error(e))?
-        .to_string();
-
     Ok(match req.response {
-        BiliRequestResponseType::Json => BiliResponse::Json(inner),
-        BiliRequestResponseType::Text => BiliResponse::Text(inner),
+        BiliRequestResponseType::Json => BiliResponse::Json(resp.text()?),
+        BiliRequestResponseType::Text => BiliResponse::Text(resp.text()?),
     })
 }

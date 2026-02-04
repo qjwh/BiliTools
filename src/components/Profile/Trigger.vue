@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import i18n from '@/i18n';
 import { useAuthStore } from '@/store';
 import { NAvatar, NSkeleton, NText } from 'naive-ui';
 import { computed } from 'vue';
@@ -7,11 +8,11 @@ const auth = useAuthStore();
 
 const name = computed(() => {
   if (auth.isAnonymous) {
-    return '登录';
+    return i18n.global.t('auth.stat.login');
   } else if (auth.profile && auth.isValid) {
     return auth.profile.name;
   } else {
-    return '加载中';
+    return i18n.global.t('auth.stat.loading');
   }
 });
 </script>

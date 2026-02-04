@@ -1,4 +1,4 @@
-export * as event from './event';
+export * as bootstrap from './bootstrap';
 export * as http from './http';
-export * as init from './init';
+export * as message from './message';
 export * as result from './result';

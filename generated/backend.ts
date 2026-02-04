@@ -24,9 +24,9 @@ async ensureRequestEnv() : Promise<Result<null, AppError>> {
     else return { status: "error", error: e  as any };
 }
 },
-async scanLoginPrepare() : Promise<Result<ScanLoginPrepareResponseData, AppError>> {
+async scanLoginGenQrcode() : Promise<Result<ScanLoginPrepareResponseData, AppError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("scan_login_prepare") };
+    return { status: "ok", data: await TAURI_INVOKE("scan_login_gen_qrcode") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -35,30 +35,6 @@ async scanLoginPrepare() : Promise<Result<ScanLoginPrepareResponseData, AppError
 async scanLogin(qrcodeKey: string) : Promise<Result<ScanLoginStatus, AppError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("scan_login", { qrcodeKey }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async smsLoginPrepare() : Promise<Result<SmsCaptchaResponseData, AppError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("sms_login_prepare") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async smsLoginSendCode(cid: string, tel: string, token: string, gt: string, challenge: string) : Promise<Result<SmsSendCodeResponseData, AppError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("sms_login_send_code", { cid, tel, token, gt, challenge }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async smsLogin(cid: string, tel: string, code: string, captchaKey: string) : Promise<Result<null, AppError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("sms_login", { cid, tel, code, captchaKey }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -133,9 +109,6 @@ export type ScanLoginStatus =
  * 0
  */
 { type: "Success" }
-export type SmsCaptchaResponseData = { token: string; geetest: SmsCaptchaResponseGeetest }
-export type SmsCaptchaResponseGeetest = { gt: string; challenge: string }
-export type SmsSendCodeResponseData = { captcha_key: string }
 export type Theme = 
 /**
  * Light theme.
