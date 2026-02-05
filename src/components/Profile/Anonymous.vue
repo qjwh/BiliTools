@@ -19,7 +19,7 @@ onBeforeUnmount(() => {});
         class="w-fit! h-fit! p-2! rounded-lg! border border-[#e3e5e7]"
         :size="144"
       />
-      <NText>{{ $t('auth.scan.disclaimer') }}</NText>
+      <NText class="whitespace-pre-wrap text-center">{{ $t('auth.scan.disclaimer') }}</NText>
     </div>
   </div>
 </template>

@@ -26,7 +26,7 @@ export interface NavResponse {
   };
 }
 
-export interface StatResponse {
+export interface NavStatResponse {
   code: number;
   message: string;
   ttl: number;

@@ -48,7 +48,7 @@ async exitLogin() : Promise<Result<null, AppError>> {
     else return { status: "error", error: e  as any };
 }
 },
-async biliRequest(req: BiliRequest) : Promise<Result<BiliResponse, AppError>> {
+async biliRequest(req: BiliRequest) : Promise<Result<string, AppError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("bili_request", { req }) };
 } catch (e) {
@@ -77,11 +77,9 @@ export type AppError = { source: string; reason: string }
 export type Aria2Config = { exec: Aria2Exec; conf: Aria2ConfigConf }
 export type Aria2ConfigConf = { "max-concurrent-downloads": string; "max-overall-download-limit": string; "max-download-limit": string; "max-connection-per-server": string }
 export type Aria2Exec = "Bundled" | { Custom: string }
-export type BiliRequest = { url: string; method: BiliRequestMethod; query: ([string, string])[] | null; body: BiliRequestBody | null; response: BiliRequestResponseType }
+export type BiliRequest = { url: string; method: BiliRequestMethod; query: ([string, string])[] | null; body: BiliRequestBody | null }
 export type BiliRequestBody = { Json: string } | { Form: ([string, string])[] }
 export type BiliRequestMethod = "GET" | "POST"
-export type BiliRequestResponseType = "json" | "text"
-export type BiliResponse = { type: "json"; data: string } | { type: "text"; data: string }
 export type Config = { ui: UiConfig; proxy: ProxyConfig; aria2: Aria2Config }
 export type FrontendRequest = { id: string; payload: FrontendRequestPayload }
 export type FrontendRequestPayload = { type: "BiliUuid"; now: string } | { type: "BiliTicketHexSign"; message: string; key: string }

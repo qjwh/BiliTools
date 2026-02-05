@@ -1,7 +1,7 @@
 use std::sync::{LazyLock, RwLock};
 
 use regex::Regex;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Deserialize, de::DeserializeOwned};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_http::reqwest;
 
@@ -227,7 +227,6 @@ pub struct BiliRequest<'a> {
     pub method: BiliRequestMethod,
     pub query: Option<Vec<(&'a str, &'a str)>>,
     pub body: Option<BiliRequestBody<'a>>,
-    pub response: BiliRequestResponseType,
 }
 
 impl Into<Method> for BiliRequestMethod {
@@ -262,28 +261,12 @@ impl<'a> TryFrom<&'a BiliRequestBody<'a>> for Body<'a> {
     }
 }
 
-#[derive(Debug, Deserialize, specta::Type)]
-pub enum BiliRequestResponseType {
-    #[serde(rename = "json")]
-    Json,
-    #[serde(rename = "text")]
-    Text,
-}
-
-#[derive(Debug, Serialize, specta::Type)]
-#[serde(tag = "type", content = "data", rename_all = "lowercase")]
-pub enum BiliResponse {
-    // stringified
-    Json(String),
-    Text(String),
-}
-
 #[tauri::command]
 #[specta::specta]
 pub async fn bili_request(
     app: AppHandle,
     req: BiliRequest<'_>,
-) -> AppResult<BiliResponse> {
+) -> AppResult<String> {
     let auth = app.state::<AuthManager>();
     let http = app.state::<HttpContext>();
     let resp = http
@@ -296,8 +279,5 @@ pub async fn bili_request(
         )
         .await?;
 
-    Ok(match req.response {
-        BiliRequestResponseType::Json => BiliResponse::Json(resp.text()?),
-        BiliRequestResponseType::Text => BiliResponse::Text(resp.text()?),
-    })
+    Ok(resp.text()?)
 }

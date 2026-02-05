@@ -15,11 +15,13 @@ export async function unwrap<T>(
     return resolved.data;
   }
 
-  const errRoot = `error.${resolved.error.source}.${resolved.error.reason}`;
+  const errPath = `error.${resolved.error.source}.${resolved.error.reason}`;
+
+  const err = i18n.global.te(errPath) ? i18n.global.t(errPath).split('\n') : [errPath];
 
   message.notify({
-    title: i18n.global.t(`${errRoot}.title`),
-    body: i18n.global.t(`${errRoot}.body`),
+    title: err[0],
+    body: err[1],
     type: 'error',
   });
 

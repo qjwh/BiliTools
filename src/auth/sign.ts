@@ -31,7 +31,7 @@ export function biliTicketHexSign(message: string, key: string) {
   return CryptoJS.enc.Hex.stringify(buffer);
 }
 
-export async function wbi(query: http.JsonValue) {
+export async function wbi(query: http.types.JsonValue) {
   const navResp = await getNav();
   if (!navResp) return query;
   const nav = navResp.data;

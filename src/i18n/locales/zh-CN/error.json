@@ -1,0 +1,50 @@
+{
+  "biliApi": {
+    "account_not_logined": "账号未登录 (-101)\n在游客模式下此功能无法使用",
+    "account_banned": "账号被封停 (-102)",
+    "invalid_csrf": "csrf校验失败 (-111)\n请在退出登录后重新登录",
+    "risk_verify_failed": "风控校验失败 (-352)\n请稍后再试",
+    "bad_request": "请求错误 (-400)\n请于日志查看详细信息",
+    "unauthorized": "未认证 (-401)\n权限不足或为游客模式",
+    "permission_denied": "访问权限不足 (-403)",
+    "not_found": "啥都木有 (-404)",
+    "request_rejected": "请求被拦截 (-412)\n请稍后再试",
+    "server_error": "服务器错误 (-500)",
+    "geo_limit": "地理区域限制 (-688)",
+    "copyright_limit": "版权限制 (-699)",
+    "rate_limited": "请求过于频繁 (-799)\n请稍后再试",
+    "unknown": "未知错误\n请于日志查看详细信息"
+  },
+  "auth": {
+    "io_failed": "读取或更新登录状态失败\n已回退至游客模式，请于日志查看详细信息",
+    "parse_failed": "解析登录状态失败\n已回退至游客模式，请于日志查看详细信息",
+    "env": {
+      "ensure_failed": "无法校验请求环境"
+    },
+    "exit": {
+      "exit_login_failed": "退出登录失败"
+    },
+    "scan": {
+      "gen_qrcode_failed": "生成登录二维码失败",
+      "login_failed": "扫码登录失败\n"
+    }
+  },
+  "config": {
+    "io_failed": "读取或更新应用配置失败\n已回退为默认设置，请于日志查看详细信息",
+    "parse_failed": "解析应用配置失败\n已回退为默认设置，请于日志查看详细信息"
+  },
+  "http": {
+    "invalid_cookie": "无法解析响应中的 Cookie 信息",
+    "not_initialized": "HTTP 上下文尚未完全初始化\n请稍后再试",
+    "parse_resp_failed": "无法解析响应",
+    "timeout": "请求超时，服务器无响应",
+    "failed": "请求失败\n请于日志查看详细信息"
+  },
+  "ipc": {
+    "frontend_timeout": "请求超时，前端无响应",
+    "frontend_error": "请求失败\n请于日志查看详细信息"
+  },
+  "aria2": {
+    "spawn_failed": "创建 aria2 服务失败\n请于日志查看详细信息"
+  }
+}

@@ -28,7 +28,7 @@ export const useSystemStore = defineStore('system', {
       if (this.locale === next) return;
       this.locale = next;
       document.documentElement.lang = next;
-      i18n.global.locale.value = next;
+      i18n.global.locale = next;
     },
     async applyTheme(next: Theme) {
       if (this.theme === next) return;
