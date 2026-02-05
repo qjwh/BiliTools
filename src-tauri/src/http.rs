@@ -1,5 +1,6 @@
 use std::sync::{LazyLock, RwLock};
 
+use base64::{Engine, engine::general_purpose};
 use regex::Regex;
 use serde::{Deserialize, de::DeserializeOwned};
 use tauri::{AppHandle, Manager};
@@ -106,6 +107,10 @@ impl Response {
                 .map_err(|e| Error::FromUtf8Error(e))?
                 .to_string()
         )
+    }
+
+    pub fn base64(&self) -> Result<String, Error> {
+        Ok(general_purpose::STANDARD.encode(&self.bytes))
     }
 }
 
@@ -227,6 +232,7 @@ pub struct BiliRequest<'a> {
     pub method: BiliRequestMethod,
     pub query: Option<Vec<(&'a str, &'a str)>>,
     pub body: Option<BiliRequestBody<'a>>,
+    pub base64: bool,
 }
 
 impl Into<Method> for BiliRequestMethod {
@@ -279,5 +285,9 @@ pub async fn bili_request(
         )
         .await?;
 
-    Ok(resp.text()?)
+    Ok(if req.base64 {
+        resp.base64()?
+    } else {
+        resp.text()?
+    })
 }

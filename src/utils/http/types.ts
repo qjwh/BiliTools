@@ -43,7 +43,12 @@ export type RequestTextOpt = RequestBaseOpt & {
   type: 'text';
 }
 
+export type RequestBinaryOpt = RequestBaseOpt & {
+  type: 'binary';
+}
+
 export type RequestOpt =
   | RequestJsonOpt
   | RequestJsonUnwrapOpt
-  | RequestTextOpt;
+  | RequestTextOpt
+  | RequestBinaryOpt;

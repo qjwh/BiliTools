@@ -21,6 +21,10 @@ export async function biliRequest(
 ): Promise<string | null>;
 
 export async function biliRequest(
+  opt: types.RequestBinaryOpt,
+): Promise<Uint8Array<ArrayBuffer> | null>;
+
+export async function biliRequest(
   opt: types.RequestOpt,
 ) {
   const url = opt.url;
@@ -34,16 +38,21 @@ export async function biliRequest(
       method,
       query,
       body,
+      base64: opt.type === 'binary'
     }),
   );
 
   if (!resp) return;
 
   switch (opt.type) {
+    case 'binary': {
+      return Uint8Array.fromBase64(resp);
+    }
     case 'text': {
       return resp;
     }
     case 'json': {
+
       const json = JSON.parse(resp);
       if (opt.type === 'json' && (!opt.unwrap)) return json;
 
