@@ -32,17 +32,27 @@ pub fn configure(
 
     #[cfg(target_os = "macos")]
     {
+        tracing::info!("{:?}", tauri_plugin_os::version());
+        // For Tahoe, the size of traffic lights is 60*14
+        // The x offset is (36-14)/2=11, the y offset is (36-14)/2+9=20
+
+        // For the legacies (Sequoia or older), the size of traffic lights is 52*12
+        // The x offset is (36-12)/2=12, the y offset is (36-12)/2+4=16
+        let (x, y) = if let tauri_plugin_os::Version::Semantic(major, _, _) =
+            tauri_plugin_os::version()
+        {
+            if major >= 26 {
+                (11, 20)
+            } else {
+                (12, 16)
+            }
+        } else {
+            (12, 16)
+        };
+        tracing::info!(x, y, "");
         builder = builder
             .title_bar_style(tauri::TitleBarStyle::Overlay)
-            // For Tahoe, the size of traffic lights is 60*14
-            // The x offset is (36-14)/2=11, the y offset is (36-14)/2+9=20
-
-            // For the legacies (Sequoia or older), the size of traffic lights is (TODO)*16
-            // The x offset is (36-16)/2=10, the y offset is (TODO)
-            .traffic_light_position(tauri::LogicalPosition::new(
-                11,
-                20
-            ))
+            .traffic_light_position(tauri::LogicalPosition::new(x, y))
             .hidden_title(true);
     }
 

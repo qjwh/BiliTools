@@ -18,7 +18,7 @@ const name = computed(() => {
 </script>
 
 <template>
-  <div class="flex h-full ml-2 gap-2 items-center justify-center">
+  <div class="flex h-full gap-2 items-center justify-center">
     <NAvatar round :size="24">
       <img v-if="auth.profile" :src="auth.profile.avatar" />
       <NSkeleton v-else circle />

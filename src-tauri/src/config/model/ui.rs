@@ -131,7 +131,7 @@ impl WindowEffectConfig {
                         return None;
                     }
                 }
-                "macos" => WindowEffect::Sidebar,
+                "macos" => WindowEffect::HeaderView,
                 _ => return None,
             },
             Self::Titlebar => WindowEffect::Titlebar,
